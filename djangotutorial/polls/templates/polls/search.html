@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search</title>
+    <link rel="stylesheet" href="{% url 'theme_css' %}">
+    <style>
+        body {
+            background: {{ THEME_COLORS.background }};
+            color: {{ THEME_COLORS.text }};
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+        #search-container, #chat {
+            width: 100%;
+            max-width: 600px;
+        }
+        #search-container form {
+            text-align: center;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            background: {{ THEME_COLORS.input_background }};
+            border: 1px solid {{ THEME_COLORS.input_border }};
+            color: {{ THEME_COLORS.input_text }};
+            border-radius: 4px;
+        }
+        #chat {
+            display: none;
+        }
+        #chat-messages {
+            margin-bottom: 20px;
+        }
+        .message {
+            padding: 8px;
+        }
+        .user {
+            text-align: right;
+        }
+        .bot {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div id="search-container">
+    <form id="search-form">
+        <input type="text" name="q" placeholder="Ask anything..." value="{{ query|default:'' }}">
+    </form>
+</div>
+<div id="chat">
+    <div id="chat-messages">
+        {% if query %}
+        <div class="message user">{{ query }}</div>
+        <div class="message bot">Search results for "{{ query }}" would appear here.</div>
+        {% endif %}
+    </div>
+    <form id="chat-form">
+        <input id="chat-input" type="text" placeholder="Ask another question...">
+    </form>
+</div>
+<script>
+const searchForm = document.getElementById('search-form');
+const searchContainer = document.getElementById('search-container');
+const chat = document.getElementById('chat');
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+const chatMessages = document.getElementById('chat-messages');
+
+searchForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const q = searchForm.elements['q'].value.trim();
+    if (!q) return;
+    startChat(q);
+});
+
+function startChat(query) {
+    searchContainer.style.display = 'none';
+    chat.style.display = 'block';
+    chatMessages.innerHTML = '<div class="message user">' + query + '</div>' +
+                             '<div class="message bot">Search results for "' + query + '" would appear here.</div>';
+}
+
+chatForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const q = chatInput.value.trim();
+    if (!q) return;
+    chatMessages.innerHTML += '<div class="message user">' + q + '</div>' +
+                              '<div class="message bot">Response for "' + q + '".</div>';
+    chatInput.value = '';
+});
+{% if query %}
+startChat("{{ query }}");
+{% endif %}
+</script>
+</body>
+</html>

@@ -68,6 +68,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'mysite.context_processors.theme_colors',
             ],
         },
     },
@@ -148,19 +149,20 @@ if not TESTING:
 SITE_ID = 1
 
 THEME_COLORS = {
-    "primary": "#22F750",
-    "secondary": "#16FAF6",
-    "text": "#D47F7F",
-    "background": "#1D0D78",
-    "button": "#83F706",
-    "button_hover": "#B00710",
-    "input_background": "#74064A",
-    "input_border": "#555555",
-    "input_text": "#FFFFFF",
-    "link": "#E50914",
-    "link_hover": "#B00710",
-    "error": "#FF0000",
-    "success": "#00FF00",
-    "warning": "#FFA500",
-    "info": "#0000FF",
+    "primary": "#4A90E2",         # Soft but vibrant blue
+    "secondary": "#2C3E50",       # Deep blue-gray
+    "text": "#F9FAFB",            # Very light text
+    "background": "#1C2731",      # Dark slate background
+    "button": "#4A90E2",          # Reuse primary
+    "button_hover": "#357ABD",    # Darker blue for hover
+    "input_background": "#2F3E4D",# Subtle input bg
+    "input_border": "#5A6B7A",    # Soft neutral border
+    "input_text": "#FFFFFF",      # White text in input
+    "link": "#79B8FF",            # Bright accent blue
+    "link_hover": "#58A6FF",      # Hover slightly darker
+    "error": "#FF6B6B",           # Coral red
+    "success": "#2ECC71",         # Green
+    "warning": "#F39C12",         # Orange
+    "info": "#9B59B6",            # Purple
+    "label": "#B0BEC5",           # Light muted for secondary labels
 }

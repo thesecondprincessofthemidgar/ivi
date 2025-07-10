@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,9 +9,10 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: url('/static/background.jpg') no-repeat center center fixed;
+            background: url("{% static 'background.jpg' %}") no-repeat center center fixed;
             background-size: cover;
             position: relative;
+            color: {{ THEME_COLORS.text }};
         }
 
         .overlay {
@@ -25,9 +27,9 @@
             z-index: 1;
             width: 360px;
             margin: 100px auto;
-            background: rgba(0, 0, 0, 0.75);
+            background: {{ THEME_COLORS.secondary }};
             padding: 40px;
-            color: #fff;
+            color: {{ THEME_COLORS.text }};
             border-radius: 4px;
         }
 
@@ -43,54 +45,62 @@
         input[type="password"] {
             width: 100%;
             padding: 12px;
-            background: #333;
-            border: none;
-            color: #fff;
+            background: {{ THEME_COLORS.input_background }};
+            border: 1px solid {{ THEME_COLORS.input_border }};
+            color: {{ THEME_COLORS.input_text }};
             border-radius: 4px;
         }
 
         .btn {
-            background: #e50914;
-            color: white;
+            background: {{ THEME_COLORS.button }};
+            color: {{ THEME_COLORS.text }};
             border: none;
             padding: 12px;
             width: 100%;
             cursor: pointer;
             font-weight: bold;
             margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: {{ THEME_COLORS.button_hover }};
         }
 
         .options {
             font-size: 0.9em;
-            color: #aaa;
+            color: {{ THEME_COLORS.input_border }};
             display: flex;
             justify-content: space-between;
             margin-top: 10px;
         }
 
         .options a {
-            color: #aaa;
+            color: {{ THEME_COLORS.link }};
             text-decoration: none;
+            font-weight: bold;
         }
 
         .options a:hover {
+            color: {{ THEME_COLORS.link_hover }};
             text-decoration: underline;
         }
 
         .signup {
             margin-top: 40px;
-            color: #aaa;
+            color: {{ THEME_COLORS.input_border }};
             font-size: 0.9em;
             text-align: center;
         }
 
         .signup a {
-            color: white;
+            color: {{ THEME_COLORS.link }};
             font-weight: bold;
             text-decoration: none;
         }
 
         .signup a:hover {
+            color: {{ THEME_COLORS.link_hover }};
             text-decoration: underline;
         }
     </style>
@@ -116,6 +126,3 @@
         <div class="signup">
             ? <a href="#">Sign up now</a>
         </div>
-    </div>
-</body>
-</html>
