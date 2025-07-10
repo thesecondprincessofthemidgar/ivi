@@ -146,3 +146,21 @@ if not TESTING:
     ]
 
 SITE_ID = 1
+
+THEME_COLORS = {
+    "primary": "#22F750",
+    "secondary": "#16FAF6",
+    "text": "#D47F7F",
+    "background": "#1D0D78",
+    "button": "#83F706",
+    "button_hover": "#B00710",
+    "input_background": "#74064A",
+    "input_border": "#555555",
+    "input_text": "#FFFFFF",
+    "link": "#E50914",
+    "link_hover": "#B00710",
+    "error": "#FF0000",
+    "success": "#00FF00",
+    "warning": "#FFA500",
+    "info": "#0000FF",
+}
