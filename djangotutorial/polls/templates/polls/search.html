@@ -7,97 +7,105 @@
     <link rel="stylesheet" href="{% url 'theme_css' %}">
     <style>
         body {
+            width: 70%;
             background: {{ THEME_COLORS.background }};
             color: {{ THEME_COLORS.text }};
             font-family: Arial, sans-serif;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
+            margin: 0 auto;
+            padding-bottom: 2%;
         }
-        #search-container, #chat {
-            width: 100%;
-            max-width: 600px;
-        }
-        #search-container form {
-            text-align: center;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            background: {{ THEME_COLORS.input_background }};
-            border: 1px solid {{ THEME_COLORS.input_border }};
-            color: {{ THEME_COLORS.input_text }};
-            border-radius: 4px;
-        }
+
         #chat {
-            display: none;
+            display: flex;
+            flex-direction: column;
+            width: 80%;         /* your chat container width */
+            max-width: 100%;
+            margin: 0 auto;     /* center #chat itself */
         }
-        #chat-messages {
-            margin-bottom: 20px;
-        }
+
         .message {
-            padding: 8px;
+            width: 70%; 
+            box-sizing: border-box;
+            margin-bottom: 2%;
         }
+
         .user {
             text-align: right;
+            font-weight: bold;
         }
-        .bot {
-            text-align: left;
+
+        .bot .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: {{ THEME_COLORS.secondary }};
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            width: 30vw;
+        }
+
+        .card img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .card-content h3 {
+            margin-top: 0;
+        }
+
+        video {
+            width: 100%;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-<div id="search-container">
-    <form id="search-form">
-        <input type="text" name="q" placeholder="Ask anything..." value="{{ query|default:'' }}">
-    </form>
-</div>
 <div id="chat">
-    <div id="chat-messages">
-        {% if query %}
-        <div class="message user">{{ query }}</div>
-        <div class="message bot">Search results for "{{ query }}" would appear here.</div>
+    {% for m in messages %}
+        {% if m.role == 'user' %}
+            <div class="message user">{{ m.text }}</div>
+        {% else %}
+            <div class="message bot">
+                {% if m.cards %}
+                <div class="cards">
+                    {% for r in m.cards %}
+                    <div class="card">
+                        <img src="{% static r.image %}" alt="">
+                        <div class="card-content">
+                            <h3>{{ r.title }}</h3>
+                            <p>{{ r.description }}</p>
+                            {% if r.video %}
+                            <video controls>
+                                <source src="{{ r.video }}" type="video/mp4">
+                            </video>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ m.text }}
+                {% endif %}
+            </div>
         {% endif %}
-    </div>
-    <form id="chat-form">
-        <input id="chat-input" type="text" placeholder="Ask another question...">
+    {% endfor %}
+</div>
+
+<div id="search-container">
+    <form method="get">
+        <input type="text" name="q" placeholder="Ask anything..." autofocus>
     </form>
 </div>
-<script>
-const searchForm = document.getElementById('search-form');
-const searchContainer = document.getElementById('search-container');
-const chat = document.getElementById('chat');
-const chatForm = document.getElementById('chat-form');
-const chatInput = document.getElementById('chat-input');
-const chatMessages = document.getElementById('chat-messages');
 
-searchForm.addEventListener('submit', function(event) {
-    event.preventDefault();
-    const q = searchForm.elements['q'].value.trim();
-    if (!q) return;
-    startChat(q);
-});
-
-function startChat(query) {
-    searchContainer.style.display = 'none';
-    chat.style.display = 'block';
-    chatMessages.innerHTML = '<div class="message user">' + query + '</div>' +
-                             '<div class="message bot">Search results for "' + query + '" would appear here.</div>';
-}
-
-chatForm.addEventListener('submit', function(event) {
-    event.preventDefault();
-    const q = chatInput.value.trim();
-    if (!q) return;
-    chatMessages.innerHTML += '<div class="message user">' + q + '</div>' +
-                              '<div class="message bot">Response for "' + q + '".</div>';
-    chatInput.value = '';
-});
-{% if query %}
-startChat("{{ query }}");
-{% endif %}
-</script>
 </body>
 </html>
