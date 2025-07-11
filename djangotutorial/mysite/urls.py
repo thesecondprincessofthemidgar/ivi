@@ -5,6 +5,9 @@ from django.conf import settings
 from polls import views as polls_views
 from django.http import HttpResponse
 
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 if settings.DEBUG:
     import debug_toolbar
@@ -15,7 +18,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('search/', polls_views.search, name='search'),
-] +  debug_toolbar_urls()
+] +  debug_toolbar_urls() + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
 if settings.DEBUG:

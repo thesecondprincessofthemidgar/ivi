@@ -73,7 +73,7 @@
 <div id="chat">
     {% for m in messages %}
         {% if m.role == 'user' %}
-            <div class="message user">{{ m.text }}</div>
+            <div class="message user">{{ m.content }}</div>
         {% else %}
             <div class="message bot">
                 {% if m.cards %}
@@ -94,7 +94,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                {{ m.text }}
+                {{ m.content }}
                 {% endif %}
             </div>
         {% endif %}

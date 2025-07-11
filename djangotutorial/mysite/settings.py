@@ -149,6 +149,9 @@ if not TESTING:
 
 SITE_ID = 1
 
+MEDIA_URL = '/DB/'
+MEDIA_ROOT = BASE_DIR / 'DB'
+
 THEME_COLORS = {
     "primary": "#4A90E2",         # Soft but vibrant blue
     "secondary": "#2C3E50",       # Deep blue-gray

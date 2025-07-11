@@ -7,11 +7,16 @@ from django.views import generic
 from .models import Choice, Question
 from django.utils import timezone
 
+from django.templatetags.static import static
+
 import os
 from openai import OpenAI
 
+os.environ.setdefault("HTTP_PROXY", "socks5://127.0.0.1:1080")
+os.environ.setdefault("HTTPS_PROXY", "socks5://127.0.0.1:1080")
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=os.getenv(OPENAI_API_KEY))
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 
 class IndexView(generic.ListView):
@@ -63,31 +68,21 @@ def vote(request, question_id):
         return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
 
 def search(request):
-    """Chat-style search page returning results as cards."""
-    # from django.shortcuts import redirect
-    # if request.GET.get("clear"):
-    #     request.session.pop("chat_messages", None)
-    #     # redirect back to /polls/search/ without any query or clear flag
-    #     return redirect("polls:search")
-    
-    # Load or init chat history
     messages = request.session.get("chat_messages", [])
 
-    api_history = [
+    query = request.GET.get("q", "").strip()
+    if query:
+        messages.append({
+            "role": "user",
+            "content": query
+        })
+        
+        api_history = [
             m for m in messages
             if m.get("role") in ("system", "user", "assistant")
             and "content" in m
         ]
 
-    query = request.GET.get("q", "").strip()
-    if query:
-        # 1) Add the user’s query
-        messages.append({
-            "role": "user",
-            "content": query
-        })
-
-        # 2) Send to OpenAI
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=api_history,
@@ -95,40 +90,30 @@ def search(request):
             temperature=0.7,
         )
 
-        # 3) Append the assistant’s reply
         assistant_msg = response.choices[0].message
         messages.append({
-            "role": assistant_msg.role,      # will be "assistant"
+            "role": assistant_msg.role,
             "content": assistant_msg.content
         })
 
-        # Persist history before building cards
         request.session["chat_messages"] = messages
         request.session.modified = True
 
-        # 4) Build your own search cards (for UI only)
         cards = []
         for q in Question.objects.filter(question_text__icontains=query)[:5]:
             cards.append({
                 "title": q.question_text,
                 "description": f"Result related to '{q.question_text}'.",
-                "image": "polls/images/images.jpeg",
-                "video": "https://www.w3schools.com/html/mov_bbb.mp4",
+                "image": static(f"DB/{q.question_text}.jpg"),
+                "video": static(f"DB/{q.question_text}.mp4"),
             })
 
-        # 5) If cards exist, append them as an assistant message
         if cards:
             messages.append({
                 "role": "assistant",
                 "cards": cards
             })
-        else:
-            messages.append({
-                "role": "assistant",
-                "content": "No results found."
-            })
 
-        # Save again
         request.session["chat_messages"] = messages
         request.session.modified = True
 
