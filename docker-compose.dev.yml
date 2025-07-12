@@ -1,0 +1,44 @@
+# docker-compose.dev.yml
+services:
+  ss-local:
+    image: shadowsocks/shadowsocks-libev
+    command: >
+      ss-local
+      -s 109.120.151.146
+      -p 31856
+      -k L9mOiSnCSnG2Pvp0WaWSyW
+      -m chacha20-ietf-poly1305
+      -l 0.0.0.0:1080       # listen on all interfaces, not just localhost
+
+  web:
+    env_file:
+      - .env.dev
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    working_dir: /app/djangotutorial
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+
+    command: >
+      sh -c "cd /app/djangotutorial &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - ss-local
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=ivi_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

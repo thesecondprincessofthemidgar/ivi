@@ -8,6 +8,7 @@ from .models import Choice, Question
 from django.utils import timezone
 
 from django.templatetags.static import static
+from django.conf import settings
 
 import os
 from openai import OpenAI
@@ -67,7 +68,43 @@ def vote(request, question_id):
         # user hits the Back button.
         return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
 
+def media_proxy(request, path):
+    import requests
+    from django.conf import settings
+    from django.http import StreamingHttpResponse, Http404
+    """
+    Proxy /media-proxy/<path> → http://127.0.0.1:9000/static/<path>
+    supporting byte ranges so HTML5 <video> will stream.
+    """
+    upstream = f'http://127.0.0.1:9000/static/{path}'
+    headers = {}
+    # Forward Range headers for seeking
+    if 'HTTP_RANGE' in request.META:
+        headers['Range'] = request.META['HTTP_RANGE']
+
+    resp = requests.get(upstream, headers=headers, stream=True)
+    if resp.status_code not in (200, 206):
+        raise Http404(f"Upstream returned {resp.status_code}")
+
+    # Copy relevant headers into our response
+    proxy_resp = StreamingHttpResponse(
+        resp.iter_content(chunk_size=8192),
+        status=resp.status_code,
+        content_type=resp.headers.get('Content-Type', 'application/octet-stream')
+    )
+    for h in ('Content-Length', 'Content-Range', 'Accept-Ranges'):
+        if h in resp.headers:
+            proxy_resp[h] = resp.headers[h]
+
+    return proxy_resp
+
 def search(request):
+    import logging
+    logger = logging.getLogger(__name__)
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    logger.debug(f"OpenAI key is present: {bool(api_key)}")
+
     messages = request.session.get("chat_messages", [])
 
     query = request.GET.get("q", "").strip()
@@ -99,14 +136,17 @@ def search(request):
         request.session["chat_messages"] = messages
         request.session.modified = True
 
-        cards = []
-        for q in Question.objects.filter(question_text__icontains=query)[:5]:
-            cards.append({
+        base = settings.MEDIA_BASE_URL.rstrip("/") + "/"
+        
+        cards = [
+            {
                 "title": q.question_text,
                 "description": f"Result related to '{q.question_text}'.",
-                "image": static(f"DB/{q.question_text}.jpg"),
-                "video": static(f"DB/{q.question_text}.mp4"),
-            })
+                "image": base + f"DB/{q.question_text}.jpeg",
+                "video": base + f"DB/{q.question_text}.mp4",
+            }
+            for q in Question.objects.filter(question_text__icontains=query)[:5]
+        ]
 
         if cards:
             messages.append({

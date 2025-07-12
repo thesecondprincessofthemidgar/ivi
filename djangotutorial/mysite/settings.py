@@ -149,8 +149,8 @@ if not TESTING:
 
 SITE_ID = 1
 
-MEDIA_URL = '/DB/'
-MEDIA_ROOT = BASE_DIR / 'DB'
+MEDIA_BASE_URL = "http://127.0.0.1:8000/media-proxy/" # for ssh connetction to db
+
 
 THEME_COLORS = {
     "primary": "#4A90E2",         # Soft but vibrant blue

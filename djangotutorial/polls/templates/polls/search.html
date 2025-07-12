@@ -80,7 +80,7 @@
                 <div class="cards">
                     {% for r in m.cards %}
                     <div class="card">
-                        <img src="{% static r.image %}" alt="">
+                        <img src="{{ r.image }}" alt="">
                         <div class="card-content">
                             <h3>{{ r.title }}</h3>
                             <p>{{ r.description }}</p>
