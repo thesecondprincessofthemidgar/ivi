@@ -17,7 +17,12 @@ os.environ.setdefault("HTTP_PROXY", "socks5://127.0.0.1:1080")
 os.environ.setdefault("HTTPS_PROXY", "socks5://127.0.0.1:1080")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY)
+client = openai.OpenAI(
+    api_key=OPENAI_API_KEY,
+    client_options={
+        "proxies": "socks5h://ss-local:1080"
+    },
+)
 
 
 class IndexView(generic.ListView):

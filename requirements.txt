@@ -21,3 +21,5 @@ sqlparse==0.5.3
 tqdm==4.67.1
 typing-inspection==0.4.1
 typing_extensions==4.14.1
+
+httpx[socks]>=0.27
