@@ -1,0 +1,31 @@
+<div class="mt-6 p-4 bg-white shadow rounded-lg">
+  <h3 class="text-lg font-bold">{{ r.title }}</h3>
+  <p class="mt-2 text-sm font-semibold text-gray-700">{{ r.description }}</p>
+
+  {% if r.video %}
+    <div class="mt-4 flex flex-col space-y-2">
+      <a
+        href="{% url 'create_sync_room' %}?anime_id={{ r.id }}&episode={{ r.episode }}&player_idx={{ forloop.counter0 }}"
+        class="text-blue-600 hover:underline"
+      >
+        Создать совместный просмотр
+      </a>
+
+      <input
+        value="{{ room_url }}"
+        readonly
+        class="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-50 cursor-text"
+      />
+
+      <video
+        data-anime-id="{{ r.id }}"
+        data-episode="{{ r.episode }}"
+        controls
+        class="w-full rounded-lg"
+      >
+        <source src="{{ r.video }}" type="video/mp4" />
+        Ваш браузер не поддерживает тег <code>video</code>.
+      </video>
+    </div>
+  {% endif %}
+</div>

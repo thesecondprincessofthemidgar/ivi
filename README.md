@@ -1,5 +1,5 @@
 ## Приложение-чат для поиска и просмотра сериалов с ChatGPT
-### Деплой: https://ivitestproject.ru (работает только с VPN)
+### Деплой: https://ivitestproject.ru
 ### K8s сервер: https://hub.docker.com/r/neekookawaii/chatapp
 ### socketio сервер для совместного просмотра: https://hub.docker.com/r/neekookawaii/mysocket
 

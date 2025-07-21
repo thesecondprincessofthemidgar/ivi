@@ -1,67 +1,73 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Search</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@hotwired/stimulus@3.2.1/dist/stimulus.umd.js"></script>
-  <script type="module" src="{% static 'search/chat_controller.js' %}"></script>
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search</title>
 
-<body>
-  <div data-controller="chat" class="max-w-3xl mx-auto pt-8">
-    <div data-chat-target="messages">
+    <script src="{% static 'polls/js/socket.io.min.js' %}" defer></script>
+    <script src="{% static 'polls/js/tailwind.js' %}" defer></script>
+    <script src="{% static 'polls/js/stimulus.umd.js' %}" defer></script>
+    <script type="module" src="{% static 'polls/chat_controller.js' %}"></script>
+    <script type="module" src="{% static 'polls/sync_player.js' %}"></script>
+  </head>
 
-      {% for m in messages %}
-        {% if m.role == 'user' %}
-          <div class="text-right font-bold">{{ m.content }}</div>
-        {% else %}
-          <div>{{ m.content }}</div>
+  <body class="bg-gray-50">
+    <div
+      data-controller="chat"
+      class="max-w-3xl mx-auto pt-24"
+    >
+      {{ messages|json_script:"initial-messages" }}
+      <script>
+        const INITIAL_MESSAGES = JSON.parse(
+          document.getElementById('initial-messages').textContent,
+        );
 
-          <div>
-            {% for r in m.cards %}
-              <h3 class="mt-4 text-lg font-semibold">{{ r.title }}</h3>
-              <p class="mt-2 text-sm">{{ r.description }}</p>
-              {% if r.video %}
-                <video controls class="mt-4 w-full rounded">
-                <source src="{{ r.video }}" type="video/mp4">
-                </video>
-              {% endif %}
-            {% endfor %}
-          </div>
-          
-        {% endif %}
-      {% endfor %}
+        window.SYNC_CONTEXT = {
+          room: '{{ room|escapejs }}',
+          anime_id: '{{ anime_id|escapejs }}',
+          episode: '{{ episode|escapejs }}',
+        };
+      </script>
 
-      <div data-chat-target="suggestions"
-        data-action="click->chat#select">
-      </div>  
+      <div data-chat-target="messages"></div>
 
-      <form data-chat-target="inputBox" data-action="submit->chat#send" class="flex items-center w-full max-w-3xl mt-6 pb-8">
+      <div
+        data-chat-target="suggestions"
+        data-action="click->chat#select"
+      ></div>
 
-        <button type="button"
+      <form
+        data-chat-target="inputBox"
+        data-action="submit->chat#send"
+        class="flex items-center w-full max-w-3xl mt-6 pb-8"
+      >
+        <button
+          type="button"
           class="px-4 py-3 bg-gray-300 rounded"
-          data-action="click->chat#clear">
+          data-action="click->chat#clear"
+        >
           🗑
         </button>
 
-        <input 
+        <input
           data-chat-target="input"
           data-action="input->chat#onInput"
-          type="text" name="q"
-          placeholder="Ask anything..." 
-          class="w-full p-3 rounded border border-gray-300 focus:outline-none focus:ring"
-          autocomplete="off">
+          type="text"
+          name="q"
+          placeholder="Ask anything..."
+          class="w-full p-3 mx-3 rounded border border-gray-300 focus:outline-none focus:ring"
+          autocomplete="off"
+        />
 
-        <button type="submit"
-          class="px-4 py-3 bg-gray-300 rounded">
+        <button
+          type="submit"
+          class="px-4 py-3 bg-gray-300 rounded"
+        >
           ➤
         </button>
-
       </form>
-
     </div>
-</body>
-
+  </body>
 </html>

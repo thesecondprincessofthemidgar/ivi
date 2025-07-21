@@ -1,162 +1,137 @@
-import debounce from "https://cdn.skypack.dev/lodash.debounce"
+import debounce from "https://cdn.skypack.dev/lodash.debounce";
 
-const { Application, Controller } = Stimulus
-const application = Application.start()
+const { Application, Controller } = window.Stimulus;
+const application = Application.start();
 
-import { Server } from "socket.io";
+const renderUserMessage = (content) =>
+  `<div class="text-right font-bold mb-2">${content}</div>`;
 
-import express from 'express';
-import { createServer } from 'node:http';
+const renderAssistantMessage = (content) =>
+  `<div class="mb-2">${content || ""}</div>`;
 
-const app = express();
-const server = createServer(app);
-
-app.get('/', (req, res) => {
-  res.send('<h1>Hello world</h1>');
-});
-
-server.listen(3000, () => {
-  console.log('server running at http://localhost:3000');
-});
+const renderCard = (card) => `
+  <div class="my-4 p-4 border rounded">
+    <h3 class="text-lg font-semibold">${card.title}</h3>
+    <p class="mt-2 text-sm">${card.description}</p>
+    ${card.video ? `<video controls class="mt-4 w-full rounded"><source src="${card.video}" type="video/mp4"></video>` : ""}
+  </div>
+`;
 
 class ChatController extends Controller {
-  static targets = ["input", "suggestions", "messages"]
+  static targets = ["input", "suggestions", "messages"];
 
   connect() {
-    this.searchAbortController = null
-    // this.search = debounce(this.search.bind(this), 400) // Эконом вариант
+    this.searchAbortController = null;
+    this.search = debounce(this._search.bind(this), 400);
   }
 
   onInput() {
-    const q = this.inputTarget.value.trim()
-    if (q.length) {
-      this.search(q)
+    const query = this.inputTarget.value.trim();
+    if (query) {
+      this.search(query);
     } else {
-      this.clearSuggestions()
+      this.clearSuggestions();
     }
   }
 
-  async search(q) {
-    if (!q) {
-      this.clearSuggestions()
-      return
-    }
+  async send(event) {
+    event.preventDefault();
+    const query = this.inputTarget.value.trim();
+    if (!query) return;
 
-    if (this.searchAbortController) {
-      this.searchAbortController.abort()
-    }
-    this.searchAbortController = new AbortController()
+    const resp = await fetch(`/search?q=${encodeURIComponent(query)}`, {
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    });
+    const { messages } = await resp.json();
 
-    this.showLoading()
-    
+    // Отрисовываем историю заново
+    this.messagesTarget.innerHTML = "";
+    messages.forEach((msg) => {
+      if (msg.role === "user") {
+        this.messagesTarget.insertAdjacentHTML("beforeend", renderUserMessage(msg.content));
+      } else {
+        this.messagesTarget.insertAdjacentHTML("beforeend", renderAssistantMessage(msg.content));
+        msg.cards?.forEach((card) => this.messagesTarget.insertAdjacentHTML("beforeend", renderCard(card)));
+      }
+    });
+
+    // Скроллим к последнему сообщению
+    this.messagesTarget.scrollTop = this.messagesTarget.scrollHeight;
+  }
+
+  async clear() {
+    this.messagesTarget.innerHTML = "";
+    await fetch("/search/?clear=1");
+  }
+
+  // Автодополнение
+  async _search(query) {
+    // Отмена предыдущего запроса
+    this.searchAbortController?.abort();
+    this.searchAbortController = new AbortController();
+
+    this.showLoading();
+
     try {
-      const resp = await fetch(`/suggestions?q=${encodeURIComponent(q)}`, {signal: this.searchAbortController.signal});
-      const items = await resp.json()
-      
-      const current = this.inputTarget.value.trim();
-      if (current !== q) return;
-      
+      const resp = await fetch(`/suggestions?q=${encodeURIComponent(query)}`, {
+        signal: this.searchAbortController.signal,
+      });
+      const items = await resp.json();
+
+      // Если пользователь успел набрать новый текст – игнорируем ответ
+      if (this.inputTarget.value.trim() !== query) return;
+
       this.showSuggestions(items);
     } catch (error) {
-      console.error(error)
-      this.clearSuggestions()
+      if (error.name !== "AbortError") {
+        console.error(error);
+        this.clearSuggestions();
+      }
     } finally {
-      this.hideLoading()
+      this.hideLoading();
     }
-  }
-
-  showLoading() {
-    this.clearSuggestions()
-    this.suggestionsTarget.innerHTML = `
-      <div class="loading-message px-4 py-2 text-gray-500 italic">Загрузка...</div>
-    `
-  }
-
-  hideLoading() {
-    const el = this.suggestionsTarget.querySelector(".loading-message")
-    if (el) el.remove()
   }
 
   showSuggestions(items) {
-    if (items.length === 0) {
-      return this.clearSuggestions()
-    }
-    
-    const list = items.map(i => `
-      <div
-      class="suggestion-item px-4 py-2 hover:bg-gray-200 cursor-pointer rounded transition"
-      data-id="${i.id}" data-value="${i.text}">
-        ${i.text}
-      </div>
-    `).join("")
+    if (items.length === 0) return this.clearSuggestions();
+
+    const list = items
+      .map(
+        (i) => `
+        <div class="suggestion-item px-4 py-2 hover:bg-gray-200 cursor-pointer rounded transition" data-id="${i.id}" data-value="${i.text}">
+          ${i.text}
+        </div>`
+      )
+      .join("");
 
     this.suggestionsTarget.innerHTML = `
       <div class="suggestion-message bg-gray-100 border border-gray-200 rounded-lg shadow-sm my-4">
         ${list}
-      </div>
-    `
+      </div>`;
   }
 
   clearSuggestions() {
-    this.suggestionsTarget.innerHTML = ""
+    this.suggestionsTarget.innerHTML = "";
   }
 
-  select(e) {
-    const el = e.target.closest(".suggestion-item")
-    if (!el) return
+  select(event) {
+    const el = event.target.closest(".suggestion-item");
+    if (!el) return;
 
-    const value = el.getAttribute("data-value")
-
-    this.inputTarget.value = value
-    this.clearSuggestions()
-    this.inputTarget.form.requestSubmit()
+    this.inputTarget.value = el.dataset.value;
+    this.clearSuggestions();
+    this.inputTarget.form.requestSubmit();
   }
 
-  async send(e) {
-    e.preventDefault()
-    const q = this.inputTarget.value.trim()
-    if (!q) return
-
-    const resp = await fetch(`/search?q=${encodeURIComponent(q)}`, {headers: {"X-Requested-With": "XMLHttpRequest"}});
-    const data = await resp.json()
-    this.messagesTarget.innerHTML = ''
-
-    data.messages.forEach(msg => {
-      if (msg.role === 'user') {
-        this.messagesTarget.innerHTML += renderUserMessage(msg.content);
-      } else {
-        this.messagesTarget.innerHTML += renderAssistantMessage(msg.content);
-        if (msg.cards) {
-          msg.cards.forEach(card => {
-            this.messagesTarget.innerHTML += renderCard(card);
-          })
-        }
-      }
-    })
+  showLoading() {
+    this.clearSuggestions();
+    this.suggestionsTarget.innerHTML =
+      '<div class="loading-message px-4 py-2 text-gray-500 italic">Загрузка...</div>';
   }
 
-  async clear() {
-    this.messagesTarget.innerHTML = ""
-    await fetch("/search/?clear=1")
+  hideLoading() {
+    this.suggestionsTarget.querySelector(".loading-message")?.remove();
   }
 }
 
-function renderUserMessage(content) {
-  return `<div class="text-right font-bold mb-2">${content}</div>`;
-}
-
-function renderAssistantMessage(content) {
-  return `<div class="mb-2">${content || ''}</div>`;
-}
-
-function renderCard(card) {
-  return `
-    <div class="my-4 p-4 border rounded">
-      <h3 class="text-lg font-semibold">${card.title}</h3>
-      <p class="mt-2 text-sm">${card.description}</p>
-      ${card.video ? `<video controls class="mt-4 w-full rounded"><source src="${card.video}" type="video/mp4"></video>` : ''}
-    </div>
-  `;
-}
-
-application.register("chat", ChatController)
+application.register("chat", ChatController);
